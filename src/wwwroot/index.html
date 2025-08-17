@@ -5,7 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>web</title>
-    <base href="/" />
+    <script>
+        // Dynamically set base href depending on whether it's localhost or deployed
+        const isLocalhost = window.location.hostname === "localhost";
+        const basePath = isLocalhost ? "/" : "/sample-pdf-data-extraction-using-dotnet/";
+        document.write(`<base href="${basePath}">`);
+    </script>
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="Sample.PdfDataExtraction.Web.styles.css" rel="stylesheet" />
