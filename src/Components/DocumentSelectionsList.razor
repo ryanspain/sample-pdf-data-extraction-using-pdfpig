@@ -1,0 +1,144 @@
+@inject HttpClient Http
+
+<FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
+    <FluentStack Orientation="Orientation.Horizontal" Style="align-items: center; margin-bottom: 16px;">
+        <FluentToolbar Style="padding: 0 10px; border-bottom: 1px solid var(--neutral-stroke-divider);">
+            <FluentLabel Typography="Typography.Subtitle" Style="font-weight: 600;">
+                Current document regions
+            </FluentLabel>
+            <FluentSpacer/>
+        </FluentToolbar>
+        <FluentSpacer/>
+        <FluentBadge BackgroundColor="var(--neutral-fill-secondary)" Color="var(--neutral-foreground-rest)">
+            @DocumentSelections.Count
+        </FluentBadge>
+    </FluentStack>
+
+    @if (DocumentSelections.Count == 0)
+    {
+        <div style="text-align: center; padding: 32px 16px; color: var(--neutral-foreground-secondary);">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Document())" Style="margin-bottom: 8px;"/>
+            <FluentLabel Typography="Typography.Caption" Style="display: block;">
+                No bounding boxes created yet. Draw on the PDF to get started.
+            </FluentLabel>
+        </div>
+    }
+    else
+    {
+        <FluentDataGrid Items="@DocumentSelections.AsQueryable()" RowSize="DataGridRowSize.Medium">
+            <PropertyColumn Property="@(p => p.Name)" Sortable="true" Width="60%"/>
+            <TemplateColumn Title="Actions" Align="@Align.End" Width="40%">
+                <FluentButton aria-label="Edit item" IconEnd="@(new Icons.Regular.Size16.Edit())"
+                              OnClick="@(() => HandleEditClicked(context))"/>
+                <FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())"
+                              OnClick="@(() => HandleDeleteClicked(context))"/>
+            </TemplateColumn>
+        </FluentDataGrid>
+
+        <FluentButton Appearance="Appearance.Accent"
+                      @onclick="ExtractData"
+                      disabled="@isExtracting"
+                      Style="width: 100%; margin-top: 20px;">
+            <FluentIcon Value="@(new Icons.Regular.Size16.ArrowClockwise())"
+                        Style="margin-right: 8px;"/>
+            @(isExtracting ? "Extracting..." : "Extract Data")
+        </FluentButton>
+    }
+</FluentCard>
+
+@if (extractedData.Count > 0)
+{
+    <FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
+        <FluentToolbar Style="padding: 0 10px; border-bottom: 1px solid var(--neutral-stroke-divider);">
+            <FluentLabel Typography="Typography.Subtitle" Style="font-weight: 600;">
+                Extracted data
+            </FluentLabel>
+            <FluentSpacer/>
+        </FluentToolbar>
+        
+        <FluentDataGrid Items="@extractedData.AsQueryable()">
+            <PropertyColumn Property="@(p => p.Name)" Sortable="true"/>
+            <PropertyColumn Property="@(p => p.Text)" Sortable="true"/>
+        </FluentDataGrid>
+    </FluentCard>
+}
+
+@code {
+    [Parameter] public List<DocumentSelection> DocumentSelections { get; set; } = new();
+    [Parameter] public EventCallback<DocumentSelection> OnEdit { get; set; }
+    [Parameter] public EventCallback<DocumentSelection> OnDelete { get; set; }
+    [Parameter] public EventCallback OnExtract { get; set; }
+
+    private List<ExtractedDocumentData> extractedData = new();
+    private bool isExtracting = false;
+
+    private async Task HandleEditClicked(DocumentSelection selection)
+    {
+        await OnEdit.InvokeAsync(selection);
+    }
+
+    private async Task HandleDeleteClicked(DocumentSelection selection)
+    {
+        await OnDelete.InvokeAsync(selection);
+    }
+
+    private async Task ExtractData()
+    {
+        if (isExtracting) return;
+
+        isExtracting = true;
+        StateHasChanged();
+
+        try
+        {
+            extractedData.Clear();
+
+            using var httpResponse = await Http.GetAsync("sample-invoice.pdf");
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Failed to load PDF");
+                return;
+            }
+
+            using var stream = await httpResponse.Content.ReadAsStreamAsync();
+            using var document = PdfDocument.Open(stream);
+
+            if (document.NumberOfPages == 0) return;
+
+            var page = document.GetPage(1); // Assuming we're working with page 1
+            var words = page.GetWords().ToList();
+            var blocks = DocstrumBoundingBoxes.Instance.GetBlocks(words);
+
+            foreach (var selection in DocumentSelections)
+            {
+                var boundingBoxRect = new PdfRectangle(
+                    bottomLeft: new PdfPoint(selection.PdfSelection.BottomLeftX, selection.PdfSelection.BottomLeftY),
+                    topRight: new PdfPoint(selection.PdfSelection.TopRightX, selection.PdfSelection.TopRightY)
+                );
+
+                var blocksThatIntersect = blocks.Where(b => b.BoundingBox.IntersectsWith(boundingBoxRect)
+                );
+
+                var extractedText = string.Join("\n", blocksThatIntersect.Select(b => b.Text));
+
+                extractedData.Add(new ExtractedDocumentData
+                {
+                    Name = selection.Name,
+                    Text = extractedText
+                });
+            }
+
+            await OnExtract.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error extracting data: {ex.Message}");
+        }
+        finally
+        {
+            isExtracting = false;
+            StateHasChanged();
+        }
+    }
+
+}

@@ -1,0 +1,191 @@
+@page "/"
+
+<PageTitle>PDF data extraction demo</PageTitle>
+
+<FluentStack Orientation="Orientation.Horizontal" Style="height: 100%;">
+    <!-- PDF Viewer Section -->
+    <FluentStack Orientation="Orientation.Vertical" Style="flex: 1; min-width: 0; background: var(--neutral-layer-1); margin: 16px; border-radius: 8px; box-shadow: var(--elevation-shadow-card-rest);">
+        <FluentToolbar Style="margin: 10px; padding: 16px 20px; border-bottom: 1px solid var(--neutral-stroke-divider);">
+            <FluentLabel Typography="Typography.Subtitle" Style="font-weight: 600;">Document viewer</FluentLabel>
+            <FluentSpacer />
+            <FluentBadge BackgroundColor="var(--accent-fill-rest)" Color="white">sample-invoice.pdf</FluentBadge>
+        </FluentToolbar>
+        
+        <div style="flex: 1; padding: 10px; padding-bottom: 50px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto;">
+            <PdfViewer @ref="_pdfViewer"
+                       Selections="_documentSelections"
+                       OnDraw="HandleDraw"/>
+        </div>
+    </FluentStack>
+
+    <!-- Controls Panel -->
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="25"
+                 Style="width: 400px; margin: 16px 16px 16px 0;">
+        
+        
+            <DocumentSelectionForm DocumentSelection="_activeDocumentSelection"
+                             OnSave="HandleSaveClicked"
+                             OnCancel="HandleCancelClicked"/>
+
+            <DocumentSelectionsList DocumentSelections="_documentSelections"
+                               OnEdit="HandleEditClicked"
+                               OnDelete="HandleDeleteClicked"
+                               OnExtract="OnDataExtracted"/>
+        
+    </FluentStack>
+</FluentStack>
+
+@code {
+    private PdfViewer? _pdfViewer;
+    private CanvasSelection _canvasSelection = new();
+    private DocumentSelection _activeDocumentSelection = new();
+    private List<DocumentSelection> _documentSelections = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _pdfViewer != null)
+        {
+            await _pdfViewer.InitializePdf("sample-invoice.pdf");
+        }
+    }
+
+    private async Task HandleDeleteClicked(DocumentSelection selection)
+    {
+        if (_pdfViewer == null) return;
+
+        _documentSelections.Remove(selection);
+
+        // If we're currently editing this selection, clear the editing state
+        if (_activeDocumentSelection.Id == selection.Id)
+        {
+            _activeDocumentSelection = new DocumentSelection();
+        }
+
+        await _pdfViewer.RedrawSelections();
+        StateHasChanged();
+    }
+
+    private void HandleDraw(CanvasSelection canvasSelection)
+    {
+        var newDocumentSelection = new DocumentSelection
+        {
+            Id = _activeDocumentSelection.Id,
+            Name = _activeDocumentSelection.Name,
+            CanvasSelection = canvasSelection
+        };
+
+        _activeDocumentSelection = newDocumentSelection;
+
+        StateHasChanged();
+    }
+
+    private async Task HandleSaveClicked(DocumentSelection selection)
+    {
+        if (_pdfViewer == null) return;
+
+        var existingSelection = _documentSelections.FirstOrDefault(b => b.Id == selection.Id);
+
+        if (existingSelection is null)
+        {
+            var pdfHeight = await _pdfViewer.GetPdfHeight();
+
+            selection.Id = Guid.NewGuid().ToString();
+            selection.PdfSelection = selection.CanvasSelection.ToPdfSelectionCoordinates(pdfHeight);
+
+            _documentSelections.Add(selection);
+        }
+        else
+        {
+            var pdfHeight = await _pdfViewer.GetPdfHeight();
+
+            existingSelection.Name = selection.Name;
+            existingSelection.CanvasSelection = selection.CanvasSelection;
+            existingSelection.PdfSelection = selection.CanvasSelection.ToPdfSelectionCoordinates(pdfHeight);
+        }
+
+        _activeDocumentSelection = new DocumentSelection();
+        await _pdfViewer.RedrawSelections();
+        StateHasChanged();
+    }
+
+    private async Task HandleEditClicked(DocumentSelection selection)
+    {
+        if (_pdfViewer == null) return;
+
+        _activeDocumentSelection = selection;
+        await _pdfViewer.HighlightSelection(selection);
+        StateHasChanged();
+    }
+
+    private async Task HandleCancelClicked()
+    {
+        if (_pdfViewer == null) return;
+
+        _activeDocumentSelection = new DocumentSelection();
+        await _pdfViewer.RedrawSelections();
+        StateHasChanged();
+    }
+
+    private async Task OnDataExtracted()
+    {
+        // This method is called after data extraction is complete
+        // Can be used for any additional processing or notifications
+        StateHasChanged();
+    }
+
+}
+
+<style>
+    .pdf-preview-layout {
+        display: flex;
+        flex-direction: row;
+        gap: 2rem;
+        height: 100vh;
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+
+    .pdf-preview-left {
+        flex: 1 1 70%;
+        min-width: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .pdf-preview-right {
+        flex: 1 1 30%;
+        min-width: 350px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+        overflow-y: auto;
+    }
+
+    .controls-panel h4 {
+        margin-bottom: 1.5rem;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    hr {
+        margin: 2rem 0;
+        border: none;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .box-header strong {
+        color: #495057;
+    }
+
+    .extracted-header strong {
+        color: #495057;
+        font-size: 0.95rem;
+    }
+
+    .extracted-text em {
+        color: #6c757d;
+        font-style: italic;
+    }
+</style>
