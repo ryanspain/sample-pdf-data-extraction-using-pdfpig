@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+    <title>PDF data extraction demo</title>
     <script>
         // Dynamically set base href depending on whether it's localhost or deployed
         const isLocalhost = window.location.hostname === "localhost";
@@ -20,11 +20,10 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="loading-container">
+            <img class="loading-progress-image" src="images/scan.png" alt="Loading..." />
+            <div class="loading-progress-bar"></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
