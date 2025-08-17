@@ -1,0 +1,56 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build the Blazor app
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build projects
+        run: dotnet build --no-restore -c Release /p:ContinuousIntegrationBuild=true
+
+      - name: Run tests
+        run: dotnet test tests/Sample.PdfDataExtraction.Tests.csproj --verbosity normal -c Release
+
+      - name: Publish the Blazor app
+        run: dotnet publish src/Sample.PdfDataExtraction.Web.csproj -c Release -o dist
+
+      - name: Upload the Blazor app publish output
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/wwwroot
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    
+    permissions:
+      pages: write      # Grant GitHub Pages deploy permissions
+      id-token: write   # To verify the deployment source
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
