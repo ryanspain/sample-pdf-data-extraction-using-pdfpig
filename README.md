@@ -13,7 +13,7 @@ The web project is a Blazor WebAssembly standalone app that provides an interact
 - **PDF data selection**: Uses the `pdf.js` JavaScript library to support highlighting regions of the PDF document for data extraction
 - **Data extraction**: Extracts the selected data from the PDF and displays it in a structured format
 
-> [!INFO]
+> [!INFORMATION]
 > Run the app via `dotnet run` from the `/src` directory or open the solution in your preferred IDE.
 
 ## Test project
@@ -26,7 +26,7 @@ The test project is just a playground for experimenting with `PdfPig` features b
 - PDF structure analysis
 - Advanced text extraction techniques
 
-> [!INFO]
+> [!INFORMATION]
 > Run the tests via `dotnet test` from the `/tests` directory or open the solution in your preferred IDE.
 
 ## Future plans
