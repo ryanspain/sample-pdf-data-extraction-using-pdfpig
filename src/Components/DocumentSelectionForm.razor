@@ -4,68 +4,82 @@
                      Style="font-weight: 600;">@(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Add document region" : "Edit document region")</FluentLabel>
         <FluentSpacer/>
     </FluentToolbar>
-
-    <EditForm Model="DocumentSelection" OnValidSubmit="HandleSave">
-        <DataAnnotationsValidator/>
-        <ValidationSummary/>
-
-        <InputText @bind-Value="DocumentSelection!.Id" type="hidden"/>
-
-        <FluentStack Orientation="Orientation.Vertical" Style="padding: 15px; gap: 15px;">
-            <FluentTextField @bind-Value="DocumentSelection!.Name"
-                             Label="Region name"
-                             Placeholder="Enter a descriptive name..."
-                             Style="width: 100%;"/>
-
-            <FluentDivider/>
-
-            <FluentLabel Typography="Typography.Caption"
-                         Style="color: var(--neutral-foreground-secondary); margin-bottom: 8px;">
-                Coordinates (read-only)
+    
+    @if (DocumentSelection is null || 
+         (DocumentSelection.CanvasSelection.X is 0 && DocumentSelection.CanvasSelection.Y is 0) 
+    )
+    {
+        <div style="text-align: center; padding: 32px 16px; color: var(--neutral-foreground-secondary);">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Document())" Style="margin-bottom: 8px;"/>
+            <FluentLabel Typography="Typography.Caption" Style="display: block;">
+                No active document region. Draw on the PDF or edit an existing document region below.
             </FluentLabel>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="DocumentSelection" OnValidSubmit="HandleSave">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
 
-            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
-                <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.X"
-                                   ReadOnly="true"
-                                   Style="flex: 1;">
-                    X
-                </FluentNumberField>
-                <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Y"
-                                   ReadOnly="true"
-                                   Style="flex: 1;">
-                    Y
-                </FluentNumberField>
-            </FluentStack>
+            <InputText @bind-Value="DocumentSelection!.Id" type="hidden"/>
 
-            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
-                <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Width"
-                                   ReadOnly="true"
-                                   Style="flex: 1;">
-                    Width
-                </FluentNumberField>
-                <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Height"
-                                   ReadOnly="true"
-                                   Style="flex: 1;">
-                    Height
-                </FluentNumberField>
-            </FluentStack>
+            <FluentStack Orientation="Orientation.Vertical" Style="padding: 15px; gap: 15px;">
+                <FluentTextField @bind-Value="DocumentSelection!.Name"
+                                 Label="Region name"
+                                 Placeholder="Enter a descriptive name..."
+                                 Style="width: 100%;"/>
 
-            <FluentStack Orientation="Orientation.Horizontal"
-                         Style="gap: 8px; margin-top: 16px; justify-content: flex-end;">
-                <FluentButton Appearance="Appearance.Stealth"
-                              OnClick="HandleCancel"
-                              Type="ButtonType.Button"
-                              Style="min-width: 80px;">
-                    Cancel
-                </FluentButton>
-                <FluentButton Appearance="Appearance.Accent"
-                              Type="ButtonType.Submit"
-                              Style="min-width: 80px;">
-                    @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Save" : "Update")
-                </FluentButton>
+                <FluentDivider/>
+
+                <FluentLabel Typography="Typography.Caption"
+                             Style="color: var(--neutral-foreground-secondary); margin-bottom: 8px;">
+                    Coordinates (read-only)
+                </FluentLabel>
+
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
+                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.X"
+                                       ReadOnly="true"
+                                       Style="flex: 1;">
+                        X
+                    </FluentNumberField>
+                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Y"
+                                       ReadOnly="true"
+                                       Style="flex: 1;">
+                        Y
+                    </FluentNumberField>
+                </FluentStack>
+
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
+                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Width"
+                                       ReadOnly="true"
+                                       Style="flex: 1;">
+                        Width
+                    </FluentNumberField>
+                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Height"
+                                       ReadOnly="true"
+                                       Style="flex: 1;">
+                        Height
+                    </FluentNumberField>
+                </FluentStack>
+
+                <FluentStack Orientation="Orientation.Horizontal"
+                             Style="gap: 8px; margin-top: 16px; justify-content: flex-end;">
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="HandleCancel"
+                                  Type="ButtonType.Button"
+                                  Style="min-width: 80px;">
+                        Cancel
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent"
+                                  Type="ButtonType.Submit"
+                                  Style="min-width: 80px;">
+                        @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Save" : "Update")
+                    </FluentButton>
+                </FluentStack>
             </FluentStack>
-        </FluentStack>
-    </EditForm>
+        </EditForm>
+    }
 </FluentCard>
 
 @code {

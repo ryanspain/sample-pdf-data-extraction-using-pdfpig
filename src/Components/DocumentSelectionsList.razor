@@ -19,7 +19,7 @@
         <div style="text-align: center; padding: 32px 16px; color: var(--neutral-foreground-secondary);">
             <FluentIcon Value="@(new Icons.Regular.Size24.Document())" Style="margin-bottom: 8px;"/>
             <FluentLabel Typography="Typography.Caption" Style="display: block;">
-                No bounding boxes created yet. Draw on the PDF to get started.
+                No document regions saved yet. Draw on the PDF to get started.
             </FluentLabel>
         </div>
     }
@@ -39,8 +39,6 @@
                       @onclick="ExtractData"
                       disabled="@isExtracting"
                       Style="width: 100%; margin-top: 20px;">
-            <FluentIcon Value="@(new Icons.Regular.Size16.ArrowClockwise())"
-                        Style="margin-right: 8px;"/>
             @(isExtracting ? "Extracting..." : "Extract Data")
         </FluentButton>
     }
