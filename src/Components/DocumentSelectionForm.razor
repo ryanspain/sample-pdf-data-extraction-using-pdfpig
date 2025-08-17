@@ -29,6 +29,14 @@
                                  Label="Region name"
                                  Placeholder="Enter a descriptive name..."
                                  Style="width: 100%;"/>
+                
+                <FluentSelect Id="data-type" Label="Data type" TOption="string">
+                    <FluentOption Value="1" Disabled="true">Text</FluentOption>
+                    <FluentOption Value="2" Disabled="true">Number</FluentOption>
+                    <FluentOption Value="3" Disabled="true">List</FluentOption>
+                </FluentSelect>
+                
+                <FluentTooltip Anchor="data-type" HideTooltipOnCursorLeave="true" Position=TooltipPosition.Top Delay=100>Not implemented yet!</FluentTooltip>
 
                 <FluentDivider/>
 

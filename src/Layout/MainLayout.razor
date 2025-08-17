@@ -2,14 +2,19 @@
 
 @* <FluentToastProvider/> *@
 @* <FluentDialogProvider/> *@
-@* <FluentTooltipProvider/> *@
+<FluentTooltipProvider/>
 @* <FluentMessageBarProvider/> *@
 
-<FluentMainLayout Style="background: var(--neutral-layer-2); height: 100vh;">
-    <Header>PDF data extraction demo</Header>
-    <Body>
+<FluentLayout>
+    <FluentHeader>
+        <FluentHeader>PDF Data Extraction Demo</FluentHeader>
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10">
+            <FluentNavLink Style="font-weight: lighter" Href="/">Home</FluentNavLink>
+            <FluentNavLink Style="font-weight: lighter" Href="/templates">Templates</FluentNavLink>
+        </FluentStack>
+    </FluentHeader>
+
     <FluentBodyContent Style="max-width: 1200px; margin: 0 auto;">
         @Body
     </FluentBodyContent>
-    </Body>
-</FluentMainLayout>
+</FluentLayout>

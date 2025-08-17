@@ -1,0 +1,38 @@
+@page "/templates"
+
+@inject TemplateRepository TemplateRepository
+
+<PageTitle>Templates</PageTitle>
+
+<FluentStack HorizontalAlignment="HorizontalAlignment.Center" Style="width: 100%;">
+    <div style="padding: 20px; width: 100%; max-width: 960px;">
+        <FluentCard Style="padding: 1rem;">
+            <FluentDataGrid Items="@_templates.AsQueryable()" TGridItem="Template" RowSize="DataGridRowSize.Medium">
+                <PropertyColumn Property="@(p => p.Name)" Sortable="true"/>
+                <TemplateColumn Title="Actions" Align="@Align.End" Width="40%">
+                    <FluentButton Id="edit" Disabled="true" aria-label="Edit item" IconEnd="@(new Icons.Regular.Size16.Edit())"
+                                  OnClick="@(() => Console.WriteLine("Not implemented"))"/>
+                    <FluentTooltip Anchor="edit" HideTooltipOnCursorLeave="true" Position="TooltipPosition.Top" Delay="100">Not implemented yet</FluentTooltip>
+                    <FluentButton Id="delete" aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())"
+                                  OnClick="@(() => HandleDeleteClicked(context))"/>
+                </TemplateColumn>
+            </FluentDataGrid>
+        </FluentCard>
+    </div>
+</FluentStack>
+
+@code {
+    private Template[]? _templates = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _templates = await TemplateRepository.GetAll();
+    }
+    
+    private async Task HandleDeleteClicked(Template template)
+    {
+        _templates = [];
+        await TemplateRepository.Delete(template.Id);
+    }
+
+}

@@ -1,4 +1,5 @@
 @inject HttpClient Http
+@inject TemplateRepository TemplateRepository
 
 <FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
     <FluentStack Orientation="Orientation.Horizontal" Style="align-items: center; margin-bottom: 16px;">
@@ -35,11 +36,18 @@
             </TemplateColumn>
         </FluentDataGrid>
 
-        <FluentButton Appearance="Appearance.Accent"
+        <FluentButton Appearance="Appearance.Neutral"
                       @onclick="ExtractData"
                       disabled="@isExtracting"
                       Style="width: 100%; margin-top: 20px;">
-            @(isExtracting ? "Extracting..." : "Extract Data")
+            @(isExtracting ? "Extracting..." : "Extract data")
+        </FluentButton>
+
+        <FluentButton Appearance="Appearance.Accent"
+                      @onclick="SaveTemplate"
+                      disabled="@isSavingTemplate"
+                      Style="width: 100%; margin-top: 20px;">
+            @(isSavingTemplate ? "Saving template..." : "Save as template")
         </FluentButton>
     }
 </FluentCard>
@@ -53,7 +61,7 @@
             </FluentLabel>
             <FluentSpacer/>
         </FluentToolbar>
-        
+
         <FluentDataGrid Items="@extractedData.AsQueryable()">
             <PropertyColumn Property="@(p => p.Name)" Sortable="true"/>
             <PropertyColumn Property="@(p => p.Text)" Sortable="true"/>
@@ -69,6 +77,7 @@
 
     private List<ExtractedDocumentData> extractedData = new();
     private bool isExtracting = false;
+    private bool isSavingTemplate = false;
 
     private async Task HandleEditClicked(DocumentSelection selection)
     {
@@ -78,6 +87,23 @@
     private async Task HandleDeleteClicked(DocumentSelection selection)
     {
         await OnDelete.InvokeAsync(selection);
+    }
+
+    private async Task SaveTemplate()
+    {
+        if (isSavingTemplate) return;
+
+        isSavingTemplate = true;
+        StateHasChanged();
+
+        await TemplateRepository.Save(new Template()
+        {
+            Id = 1,
+            Name = "Default",
+        });
+
+        isSavingTemplate = false;
+        StateHasChanged();
     }
 
     private async Task ExtractData()
