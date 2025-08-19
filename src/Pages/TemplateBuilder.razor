@@ -2,6 +2,7 @@
 @page "/{TemplateId}"
 
 @inject TemplateRepository TemplateRepository
+@inject IToastService ToastService
 
 <PageTitle>PDF data extraction demo</PageTitle>
 
@@ -12,33 +13,24 @@
                  VerticalGap="25"
                  Style="width: 100%; margin: 5px">
 
-            <PdfCanvas @ref="_pdfViewer"
-                       Selections="_documentSelections"
-                       OnDraw="HandleDraw"/>
+        @if (_template is not null)
+        {
+            <TemplateBuilderPdfCanvas @ref="_pdfViewer"
+                                      Selections="_template.DocumentSelections"
+                                      OnDraw="HandleDraw"/>
+        }
 
     </FluentStack>
 
     <!-- Template controls -->
-    <FluentStack Orientation="Orientation.Vertical"
-                 VerticalGap="25"
-                 Style="width: 500px; margin: 5px">
-
-        @if (_template is not null)
-        {
-            <TemplateForm Template="_template"
-                          OnSave="HandleTemplateSaveClicked"/>
-        }
-
-        <DocumentSelectionForm DocumentSelection="_activeDocumentSelection"
-                               OnSave="HandleSelectionSaveClicked"
-                               OnCancel="HandleSelectionCancelClicked"/>
-
-        <DocumentSelectionsList DocumentSelections="_documentSelections"
-                                OnEdit="HandleSelectionEditClicked"
-                                OnDelete="HandleSelectionDeleteClicked"
-                                OnExtract="OnDataExtracted"/>
-
-    </FluentStack>
+    <TemplateBuilderSidebar Template="_template"
+                            ActiveDocumentSelection="_activeDocumentSelection"
+                            OnTemplateSave="HandleTemplateSaveClicked"
+                            OnSelectionSave="HandleSelectionSaveClicked"
+                            OnSelectionEdit="HandleSelectionEditClicked"
+                            OnSelectionDelete="HandleSelectionDeleteClicked"
+                            OnSelectionCancel="HandleSelectionCancelClicked"
+                            OnDataExtract="OnDataExtracted"/>
 </FluentStack>
 
 @code {
@@ -46,10 +38,11 @@
     [Parameter] public string? TemplateId { get; set; }
 
     private Template? _template;
-
-    private PdfCanvas? _pdfViewer;
-    private DocumentSelection _activeDocumentSelection = new();
-    private List<DocumentSelection> _documentSelections = [];
+    private DocumentSelection _activeDocumentSelection { get; set; } = new();
+    
+    private TemplateBuilderPdfCanvas? _pdfViewer;
+    private string? _loadedTemplateId;
+    private bool _pdfInitialized;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -64,13 +57,22 @@
         {
             Id = Guid.NewGuid().ToString()
         };
+        
+        // Force re-initialization of the PDF viewer if the template ID has changed
+        if (_loadedTemplateId != TemplateId)
+        {
+            _loadedTemplateId = TemplateId;
+            _pdfInitialized = false;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _pdfViewer != null)
+        if (!_pdfInitialized && _pdfViewer is not null)
         {
             await _pdfViewer.InitializePdf("sample-invoice.pdf");
+            await _pdfViewer.RedrawSelections();
+            _pdfInitialized = true;
         }
     }
 
@@ -88,35 +90,32 @@
         StateHasChanged();
     }
 
-    /* Templates */
     private async Task HandleTemplateSaveClicked(Template template)
     {
         await TemplateRepository.Save(template);
+        ToastService.ShowToast(ToastIntent.Success, "Template saved.");
     }
 
-    /* Document selections */
     private async Task HandleSelectionSaveClicked(DocumentSelection selection)
     {
-        if (_pdfViewer == null) return;
+        if (_template is null || _pdfViewer is null) return;
 
-        var existingSelection = _documentSelections.FirstOrDefault(b => b.Id == selection.Id);
+        var existingSelection = _template.DocumentSelections.FirstOrDefault(b => b.Id == selection.Id);
+        var pdfHeight = await _pdfViewer.GetPdfHeight();
 
         if (existingSelection is null)
         {
-            var pdfHeight = await _pdfViewer.GetPdfHeight();
-
             selection.Id = Guid.NewGuid().ToString();
             selection.PdfSelection = selection.CanvasSelection.ToPdfSelectionCoordinates(pdfHeight);
-
-            _documentSelections.Add(selection);
+            _template.DocumentSelections.Add(selection);
+            ToastService.ShowToast(ToastIntent.Success, "Document region added.");
         }
         else
         {
-            var pdfHeight = await _pdfViewer.GetPdfHeight();
-
             existingSelection.Name = selection.Name;
             existingSelection.CanvasSelection = selection.CanvasSelection;
             existingSelection.PdfSelection = selection.CanvasSelection.ToPdfSelectionCoordinates(pdfHeight);
+            ToastService.ShowToast(ToastIntent.Success, "Document region updated.");
         }
 
         _activeDocumentSelection = new DocumentSelection();
@@ -126,7 +125,7 @@
 
     private async Task HandleSelectionEditClicked(DocumentSelection selection)
     {
-        if (_pdfViewer == null) return;
+        if (_pdfViewer is null) return;
 
         _activeDocumentSelection = selection;
         await _pdfViewer.HighlightSelection(selection);
@@ -135,11 +134,13 @@
 
     private async Task HandleSelectionDeleteClicked(DocumentSelection selection)
     {
-        if (_pdfViewer == null) return;
+        if (_template is null || _pdfViewer is null) return;
 
-        _documentSelections.Remove(selection);
+        _template.DocumentSelections.Remove(selection);
+        
+        ToastService.ShowToast(ToastIntent.Success, "Document region deleted.");
+        
 
-        // If we're currently editing this selection, clear the editing state
         if (_activeDocumentSelection.Id == selection.Id)
         {
             _activeDocumentSelection = new DocumentSelection();
@@ -151,19 +152,17 @@
 
     private async Task HandleSelectionCancelClicked()
     {
-        if (_pdfViewer == null) return;
+        if (_pdfViewer is null) return;
 
         _activeDocumentSelection = new DocumentSelection();
         await _pdfViewer.RedrawSelections();
         StateHasChanged();
     }
 
-    /* Misc. */
-    private async Task OnDataExtracted()
+    private Task OnDataExtracted()
     {
-        // This method is called after data extraction is complete
-        // Can be used for any additional processing or notifications
-        StateHasChanged();
+        ToastService.ShowToast(ToastIntent.Success, "Data extracted.");
+        return Task.CompletedTask;
     }
 
 }

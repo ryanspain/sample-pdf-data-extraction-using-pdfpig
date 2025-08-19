@@ -1,0 +1,64 @@
+<FluentStack Orientation="Orientation.Vertical"
+             VerticalGap="25"
+             Style="width: 900px; margin: 5px">
+
+    @if (Template is not null)
+    {
+        <TemplateBuilderDetails Template="Template"
+                                OnSave="HandleTemplateSaveClicked"/>
+
+        <TemplateBuilderSelectionForm DocumentSelection="ActiveDocumentSelection"
+                                      OnSave="HandleSelectionSaveClicked"
+                                      OnCancel="HandleSelectionCancelClicked"/>
+
+        <TemplateBuilderSelectionList DocumentSelections="Template.DocumentSelections"
+                                      OnEdit="HandleSelectionEditClicked"
+                                      OnDelete="HandleSelectionDeleteClicked"
+                                      OnExtract="OnDataExtracted"/>
+    }
+
+</FluentStack>
+
+@code {
+
+    [Parameter] public Template? Template { get; set; }
+    [Parameter] public DocumentSelection ActiveDocumentSelection { get; set; } = new();
+
+    [Parameter] public EventCallback<Template> OnTemplateSave { get; set; }
+    [Parameter] public EventCallback<DocumentSelection> OnSelectionSave { get; set; }
+    [Parameter] public EventCallback<DocumentSelection> OnSelectionEdit { get; set; }
+    [Parameter] public EventCallback<DocumentSelection> OnSelectionDelete { get; set; }
+    [Parameter] public EventCallback OnSelectionCancel { get; set; }
+    [Parameter] public EventCallback OnDataExtract { get; set; }
+
+    private async Task HandleTemplateSaveClicked(Template template)
+    {
+        await OnTemplateSave.InvokeAsync(template);
+    }
+
+    private async Task HandleSelectionSaveClicked(DocumentSelection selection)
+    {
+        await OnSelectionSave.InvokeAsync(selection);
+    }
+
+    private async Task HandleSelectionEditClicked(DocumentSelection selection)
+    {
+        await OnSelectionEdit.InvokeAsync(selection);
+    }
+
+    private async Task HandleSelectionDeleteClicked(DocumentSelection selection)
+    {
+        await OnSelectionDelete.InvokeAsync(selection);
+    }
+
+    private async Task HandleSelectionCancelClicked()
+    {
+        await OnSelectionCancel.InvokeAsync();
+    }
+
+    private async Task OnDataExtracted()
+    {
+        await OnDataExtract.InvokeAsync();
+    }
+
+}

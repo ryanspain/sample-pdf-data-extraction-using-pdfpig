@@ -28,8 +28,7 @@
 </FluentCard>
 
 @code {
-
-
+    
     [Parameter] public List<DocumentSelection> Selections { get; set; } = [];
     [Parameter] public EventCallback<CanvasSelection> OnDraw { get; set; }
     [Parameter] public EventCallback OnDrawnEnd { get; set; }

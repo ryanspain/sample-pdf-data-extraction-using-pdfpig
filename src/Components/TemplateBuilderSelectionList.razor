@@ -1,8 +1,9 @@
+@using Microsoft.FluentUI.AspNetCore.Components.Icons.Filled
 @inject HttpClient Http
 @inject TemplateRepository TemplateRepository
 
 <FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
-    
+
     <FluentToolbar>
         <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Selection regions</FluentLabel>
         <FluentBadge BackgroundColor="var(--neutral-fill-secondary)" Color="var(--neutral-foreground-rest)">
@@ -21,22 +22,32 @@
     }
     else
     {
-        <FluentDataGrid Items="@DocumentSelections.AsQueryable()" RowSize="DataGridRowSize.Medium">
-            <PropertyColumn Property="@(p => p.Name)" Sortable="true" Width="60%"/>
-            <TemplateColumn Title="Actions" Align="@Align.End" Width="40%">
-                <FluentButton aria-label="Edit item" IconEnd="@(new Icons.Regular.Size16.Edit())"
-                              OnClick="@(() => HandleEditClicked(context))"/>
-                <FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())"
-                              OnClick="@(() => HandleDeleteClicked(context))"/>
-            </TemplateColumn>
-        </FluentDataGrid>
+        <FluentStack Orientation="Orientation.Vertical" Style="padding: 10px; gap: 10px;">
 
-        <FluentButton Appearance="Appearance.Neutral"
-                      @onclick="ExtractData"
-                      disabled="@isExtracting"
-                      Style="width: 100%; margin-top: 20px;">
-            @(isExtracting ? "Extracting..." : "Extract data")
-        </FluentButton>
+            @* Document selections list *@
+            <FluentDataGrid Items="@DocumentSelections.AsQueryable()"
+                            RowSize="DataGridRowSize.Medium"
+                            Style="width: 100%">
+                <PropertyColumn Property="@(p => p.Name)" Sortable="true" Width="60%"/>
+                <TemplateColumn Title="Actions" Align="@Align.End" Width="40%">
+                    <FluentButton aria-label="Edit item" IconEnd="@(new Icons.Regular.Size16.Edit())"
+                                  OnClick="@(() => HandleEditClicked(context))"/>
+                    <FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())"
+                                  OnClick="@(() => HandleDeleteClicked(context))"/>
+                </TemplateColumn>
+            </FluentDataGrid>
+
+            @* Extract data button *@
+            <FluentButton Appearance="Appearance.Neutral"
+                          @onclick="ExtractData"
+                          disabled="@_isExtracting"
+                          IconStart="@(new Icons.Regular.Size20.DocumentTextExtract())"
+                          Loading="_isExtracting"
+                          Style="width: 100%; margin-top: 20px;">
+                @(_isExtracting ? "Extracting..." : "Extract data")
+            </FluentButton>
+
+        </FluentStack>
     }
 </FluentCard>
 
@@ -50,10 +61,15 @@
             <FluentSpacer/>
         </FluentToolbar>
 
-        <FluentDataGrid Items="@extractedData.AsQueryable()">
-            <PropertyColumn Property="@(p => p.Name)" Sortable="true"/>
-            <PropertyColumn Property="@(p => p.Text)" Sortable="true"/>
-        </FluentDataGrid>
+        <FluentStack Orientation="Orientation.Vertical"Style="padding: 10px; gap: 10px;">
+
+            @* Extracted data list *@
+            <FluentDataGrid Items="@extractedData.AsQueryable()">
+                <PropertyColumn Property="@(p => p.Name)" Sortable="true"/>
+                <PropertyColumn Property="@(p => p.Text)" Sortable="true"/>
+            </FluentDataGrid>
+
+        </FluentStack>
     </FluentCard>
 }
 
@@ -64,7 +80,7 @@
     [Parameter] public EventCallback OnExtract { get; set; }
 
     private List<ExtractedDocumentData> extractedData = new();
-    private bool isExtracting = false;
+    private bool _isExtracting;
 
     private async Task HandleEditClicked(DocumentSelection selection) => await OnEdit.InvokeAsync(selection);
 
@@ -72,9 +88,9 @@
 
     private async Task ExtractData()
     {
-        if (isExtracting) return;
+        if (_isExtracting) return;
 
-        isExtracting = true;
+        _isExtracting = true;
         StateHasChanged();
 
         try
@@ -124,7 +140,7 @@
         }
         finally
         {
-            isExtracting = false;
+            _isExtracting = false;
             StateHasChanged();
         }
     }

@@ -14,8 +14,7 @@
         @* Template ID *@
         <InputText @bind-Value="Template!.Id" type="hidden"/>
 
-        <FluentStack Orientation="Orientation.Vertical"
-                     Style="padding: 15px; gap: 15px;">
+        <FluentStack Orientation="Orientation.Vertical" Style="padding: 10px; gap: 10px;">
 
             @* Template name *@
             <FluentTextField @bind-Value="Template!.Name"
@@ -28,14 +27,17 @@
                              Label="Template description"
                              Placeholder="Enter a template description..."
                              Style="width: 100%;"/>
+            <FluentSpacer/>
 
+            @* Save button and message *@
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="15"
+                         Style="justify-content: flex-end; align-items: center;">
 
-            <FluentStack Orientation="Orientation.Horizontal"
-                         Style="gap: 8px; margin-top: 16px; justify-content: flex-end;">
-
-                @* Save *@
+                @* Save button *@
                 <FluentButton Appearance="Appearance.Accent"
                               Type="ButtonType.Submit"
+                              IconStart="@(new Icons.Regular.Size16.Save())"
+                              Loading="_isSaving"
                               Style="min-width: 80px;">
                     Save
                 </FluentButton>
@@ -52,5 +54,17 @@
     [Parameter, EditorRequired] public Template Template { get; set; } = default!;
     [Parameter] public EventCallback<Template> OnSave { get; set; }
 
-    private async Task HandleSave() => await OnSave.InvokeAsync(Template);
+    private bool _isSaving;
+
+    private async Task HandleSave()
+    {
+        if (_isSaving)
+            return;
+
+        _isSaving = true;
+        await Task.Delay(500);
+        await OnSave.InvokeAsync(Template);
+        _isSaving = false;
+    }
+
 }

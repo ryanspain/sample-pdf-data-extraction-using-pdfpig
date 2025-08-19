@@ -1,4 +1,3 @@
-@using Color = Microsoft.FluentUI.AspNetCore.Components.Color
 <FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
     
     @* Add/edit selection region header *@
@@ -27,7 +26,7 @@
 
             <InputText @bind-Value="DocumentSelection!.Id" type="hidden"/>
 
-            <FluentStack Orientation="Orientation.Vertical" Style="padding: 15px; gap: 15px;">
+            <FluentStack Orientation="Orientation.Vertical" Style="padding: 10px; gap: 10px;">
                 
                 @* Name *@
                 <FluentTextField @bind-Value="DocumentSelection!.Name"
@@ -36,12 +35,19 @@
                                  Style="width: 100%;"/>
                 
                 @* Data type (Not implemented yet) *@
-                <FluentSelect Id="data-type" Label="Data type" TOption="string" Style="width: 100%;" Position="SelectPosition.Below">
+                <FluentSelect Id="data-type-list" Label="Data type" TOption="string" Style="width: 100%;" Position="SelectPosition.Below">
                     <FluentOption Value="1" Disabled="true">Text</FluentOption>
                     <FluentOption Value="2" Disabled="true">Number</FluentOption>
                     <FluentOption Value="3" Disabled="true">List</FluentOption>
                 </FluentSelect>
-                <FluentTooltip Anchor="data-type" HideTooltipOnCursorLeave="true" Position=TooltipPosition.Top Delay=100>Not implemented yet!</FluentTooltip>
+                <FluentTooltip Anchor="data-type-list" HideTooltipOnCursorLeave="true" Position=TooltipPosition.Top Delay=100>Not implemented yet!</FluentTooltip>
+                
+                @* Selection type (Not implemented yet) *@
+                <FluentSelect Id="selection-type-list" Label="Selection type" TOption="string" Style="width: 100%;" Position="SelectPosition.Below">
+                    <FluentOption Value="1" Disabled="true">Characters</FluentOption>
+                    <FluentOption Value="2" Disabled="true">Block</FluentOption>
+                </FluentSelect>
+                <FluentTooltip Anchor="selection-type-list" HideTooltipOnCursorLeave="true" Position=TooltipPosition.Top Delay=100>Not implemented yet!</FluentTooltip>
                 
                 @* Coordinates/dimensions *@
                 <FluentAccordion Style="width: 100%;">
@@ -75,7 +81,7 @@
                 <FluentStack Orientation="Orientation.Horizontal"
                              Style="gap: 8px; margin-top: 16px; justify-content: flex-end;">
                     
-                    @* Add *@
+                    @* Cancel button *@
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="HandleCancel"
                                   Type="ButtonType.Button"
@@ -83,9 +89,11 @@
                         Cancel
                     </FluentButton>
                     
-                    @* Update *@
+                    @* Add/update button *@
                     <FluentButton Appearance="Appearance.Accent"
                                   Type="ButtonType.Submit"
+                                  IconStart="@(new Icons.Regular.Size16.Add())"
+                                  Loading="_isSaving"
                                   Style="min-width: 80px;">
                         @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Add" : "Update")
                     </FluentButton>
@@ -102,6 +110,18 @@
     [Parameter] public EventCallback<DocumentSelection> OnSave { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 
-    private async Task HandleSave() => await OnSave.InvokeAsync(DocumentSelection);
+    private bool _isSaving;
+
+    private async Task HandleSave()
+    {
+        if (_isSaving)
+            return;
+        
+        _isSaving = true;
+        await Task.Delay(500);
+        await OnSave.InvokeAsync(DocumentSelection);
+        _isSaving = false;
+    }
+    
     private async Task HandleCancel() => await OnCancel.InvokeAsync();
 }
