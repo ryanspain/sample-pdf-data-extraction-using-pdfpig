@@ -1,17 +1,34 @@
 @inject IJSRuntime JsRuntime
 
-<div
-    style="width: 100%; height: 100%; position: relative; background: var(--neutral-layer-2); border-radius: 4px; overflow: hidden;">
-    <canvas id="pdfCanvas"
-            @onmousedown="OnMouseDown"
-            @onmousemove="OnMouseMove"
-            @onmouseup="OnMouseUp"
-            style="position: absolute; top: 0; left: 0; z-index: 1; cursor: crosshair;"></canvas>
-    <canvas id="overlayCanvas"
-            style="position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none;"></canvas>
-</div>
+<FluentCard>
+    <FluentToolbar>
+        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Document preview</FluentLabel>
+        <FluentBadge BackgroundColor="var(--accent-fill-rest)" Color="white">sample-invoice.pdf</FluentBadge>
+    </FluentToolbar>
+
+    <div
+        style="position: relative;
+           width: 100%; height: 100%; 
+           margin: 25px auto;
+           background: var(--neutral-layer-2); 
+           border: 1px solid var(--neutral-stroke-rest); border-radius: 4px; 
+           overflow: hidden;">
+
+        <canvas id="pdfCanvas"
+                @onmousedown="OnMouseDown"
+                @onmousemove="OnMouseMove"
+                @onmouseup="OnMouseUp"
+                style="position: absolute; top: 0; left: 0; z-index: 1; cursor: crosshair;"></canvas>
+
+        <canvas id="overlayCanvas"
+                style="position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none;"></canvas>
+
+    </div>
+
+</FluentCard>
 
 @code {
+
 
     [Parameter] public List<DocumentSelection> Selections { get; set; } = [];
     [Parameter] public EventCallback<CanvasSelection> OnDraw { get; set; }

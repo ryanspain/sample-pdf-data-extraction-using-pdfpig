@@ -1,0 +1,56 @@
+<FluentCard>
+
+    @* Template details header *@
+    <FluentToolbar>
+        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+            Template details
+        </FluentLabel>
+    </FluentToolbar>
+
+    <EditForm Model="Template" OnValidSubmit="HandleSave">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        @* Template ID *@
+        <InputText @bind-Value="Template!.Id" type="hidden"/>
+
+        <FluentStack Orientation="Orientation.Vertical"
+                     Style="padding: 15px; gap: 15px;">
+
+            @* Template name *@
+            <FluentTextField @bind-Value="Template!.Name"
+                             Label="Template name"
+                             Placeholder="Enter a template name..."
+                             Style="width: 100%;"/>
+
+            @* Template description *@
+            <FluentTextField @bind-Value="Template!.Description"
+                             Label="Template description"
+                             Placeholder="Enter a template description..."
+                             Style="width: 100%;"/>
+
+
+            <FluentStack Orientation="Orientation.Horizontal"
+                         Style="gap: 8px; margin-top: 16px; justify-content: flex-end;">
+
+                @* Save *@
+                <FluentButton Appearance="Appearance.Accent"
+                              Type="ButtonType.Submit"
+                              Style="min-width: 80px;">
+                    Save
+                </FluentButton>
+
+            </FluentStack>
+
+        </FluentStack>
+
+    </EditForm>
+
+</FluentCard>
+
+@code {
+    [Parameter, EditorRequired] public Template Template { get; set; } = default!;
+    [Parameter] public EventCallback<Template> OnSave { get; set; }
+
+    private async Task HandleSave() => await OnSave.InvokeAsync(Template);
+}

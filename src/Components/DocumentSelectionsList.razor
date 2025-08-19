@@ -2,18 +2,13 @@
 @inject TemplateRepository TemplateRepository
 
 <FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
-    <FluentStack Orientation="Orientation.Horizontal" Style="align-items: center; margin-bottom: 16px;">
-        <FluentToolbar Style="padding: 0 10px; border-bottom: 1px solid var(--neutral-stroke-divider);">
-            <FluentLabel Typography="Typography.Subtitle" Style="font-weight: 600;">
-                Current document regions
-            </FluentLabel>
-            <FluentSpacer/>
-        </FluentToolbar>
-        <FluentSpacer/>
+    
+    <FluentToolbar>
+        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Selection regions</FluentLabel>
         <FluentBadge BackgroundColor="var(--neutral-fill-secondary)" Color="var(--neutral-foreground-rest)">
             @DocumentSelections.Count
         </FluentBadge>
-    </FluentStack>
+    </FluentToolbar>
 
     @if (DocumentSelections.Count == 0)
     {
@@ -41,13 +36,6 @@
                       disabled="@isExtracting"
                       Style="width: 100%; margin-top: 20px;">
             @(isExtracting ? "Extracting..." : "Extract data")
-        </FluentButton>
-
-        <FluentButton Appearance="Appearance.Accent"
-                      @onclick="SaveTemplate"
-                      disabled="@isSavingTemplate"
-                      Style="width: 100%; margin-top: 20px;">
-            @(isSavingTemplate ? "Saving template..." : "Save as template")
         </FluentButton>
     }
 </FluentCard>
@@ -77,34 +65,10 @@
 
     private List<ExtractedDocumentData> extractedData = new();
     private bool isExtracting = false;
-    private bool isSavingTemplate = false;
 
-    private async Task HandleEditClicked(DocumentSelection selection)
-    {
-        await OnEdit.InvokeAsync(selection);
-    }
+    private async Task HandleEditClicked(DocumentSelection selection) => await OnEdit.InvokeAsync(selection);
 
-    private async Task HandleDeleteClicked(DocumentSelection selection)
-    {
-        await OnDelete.InvokeAsync(selection);
-    }
-
-    private async Task SaveTemplate()
-    {
-        if (isSavingTemplate) return;
-
-        isSavingTemplate = true;
-        StateHasChanged();
-
-        await TemplateRepository.Save(new Template()
-        {
-            Id = 1,
-            Name = "Default",
-        });
-
-        isSavingTemplate = false;
-        StateHasChanged();
-    }
+    private async Task HandleDeleteClicked(DocumentSelection selection) => await OnDelete.InvokeAsync(selection);
 
     private async Task ExtractData()
     {

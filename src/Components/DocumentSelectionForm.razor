@@ -1,8 +1,11 @@
+@using Color = Microsoft.FluentUI.AspNetCore.Components.Color
 <FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
-    <FluentToolbar Style="padding: 0 10px; border-bottom: 1px solid var(--neutral-stroke-divider);">
-        <FluentLabel Typography="Typography.Subtitle"
-                     Style="font-weight: 600;">@(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Add document region" : "Edit document region")</FluentLabel>
-        <FluentSpacer/>
+    
+    @* Add/edit selection region header *@
+    <FluentToolbar>
+        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+            @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Add document region" : "Edit document region")
+        </FluentLabel>
     </FluentToolbar>
     
     @if (DocumentSelection is null || 
@@ -25,66 +28,70 @@
             <InputText @bind-Value="DocumentSelection!.Id" type="hidden"/>
 
             <FluentStack Orientation="Orientation.Vertical" Style="padding: 15px; gap: 15px;">
+                
+                @* Name *@
                 <FluentTextField @bind-Value="DocumentSelection!.Name"
                                  Label="Region name"
                                  Placeholder="Enter a descriptive name..."
                                  Style="width: 100%;"/>
                 
-                <FluentSelect Id="data-type" Label="Data type" TOption="string">
+                @* Data type (Not implemented yet) *@
+                <FluentSelect Id="data-type" Label="Data type" TOption="string" Style="width: 100%;" Position="SelectPosition.Below">
                     <FluentOption Value="1" Disabled="true">Text</FluentOption>
                     <FluentOption Value="2" Disabled="true">Number</FluentOption>
                     <FluentOption Value="3" Disabled="true">List</FluentOption>
                 </FluentSelect>
-                
                 <FluentTooltip Anchor="data-type" HideTooltipOnCursorLeave="true" Position=TooltipPosition.Top Delay=100>Not implemented yet!</FluentTooltip>
+                
+                @* Coordinates/dimensions *@
+                <FluentAccordion Style="width: 100%;">
+                    <FluentAccordionItem Heading="Coordinates/dimensions">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.WindowDevTools())" Color="@Color.Neutral" Slot="start" />
 
-                <FluentDivider/>
+                        @* X and Y coordinates *@
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10">
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.X"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">X</FluentNumberField>
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Y"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">Y</FluentNumberField>
+                        </FluentStack>
 
-                <FluentLabel Typography="Typography.Caption"
-                             Style="color: var(--neutral-foreground-secondary); margin-bottom: 8px;">
-                    Coordinates (read-only)
-                </FluentLabel>
+                        @* Width and height dimensions *@
+                        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Width"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">Width</FluentNumberField>
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Height"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">Height</FluentNumberField>
+                        </FluentStack>
+                        
+                    </FluentAccordionItem>
+                </FluentAccordion>
 
-                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
-                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.X"
-                                       ReadOnly="true"
-                                       Style="flex: 1;">
-                        X
-                    </FluentNumberField>
-                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Y"
-                                       ReadOnly="true"
-                                       Style="flex: 1;">
-                        Y
-                    </FluentNumberField>
-                </FluentStack>
-
-                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
-                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Width"
-                                       ReadOnly="true"
-                                       Style="flex: 1;">
-                        Width
-                    </FluentNumberField>
-                    <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Height"
-                                       ReadOnly="true"
-                                       Style="flex: 1;">
-                        Height
-                    </FluentNumberField>
-                </FluentStack>
-
+                @* Add/update buttons *@
                 <FluentStack Orientation="Orientation.Horizontal"
                              Style="gap: 8px; margin-top: 16px; justify-content: flex-end;">
+                    
+                    @* Add *@
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="HandleCancel"
                                   Type="ButtonType.Button"
                                   Style="min-width: 80px;">
                         Cancel
                     </FluentButton>
+                    
+                    @* Update *@
                     <FluentButton Appearance="Appearance.Accent"
                                   Type="ButtonType.Submit"
                                   Style="min-width: 80px;">
-                        @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Save" : "Update")
+                        @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Add" : "Update")
                     </FluentButton>
+                    
                 </FluentStack>
+                
             </FluentStack>
         </EditForm>
     }
