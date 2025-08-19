@@ -1,0 +1,70 @@
+<FluentCard>
+
+    @* Template details header *@
+    <FluentToolbar>
+        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+            Template details
+        </FluentLabel>
+    </FluentToolbar>
+
+    <EditForm Model="Template" OnValidSubmit="HandleSave">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        @* Template ID *@
+        <InputText @bind-Value="Template!.Id" type="hidden"/>
+
+        <FluentStack Orientation="Orientation.Vertical" Style="padding: 10px; gap: 10px;">
+
+            @* Template name *@
+            <FluentTextField @bind-Value="Template!.Name"
+                             Label="Template name"
+                             Placeholder="Enter a template name..."
+                             Style="width: 100%;"/>
+
+            @* Template description *@
+            <FluentTextField @bind-Value="Template!.Description"
+                             Label="Template description"
+                             Placeholder="Enter a template description..."
+                             Style="width: 100%;"/>
+            <FluentSpacer/>
+
+            @* Save button and message *@
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="15"
+                         Style="justify-content: flex-end; align-items: center;">
+
+                @* Save button *@
+                <FluentButton Appearance="Appearance.Accent"
+                              Type="ButtonType.Submit"
+                              IconStart="@(new Icons.Regular.Size16.Save())"
+                              Loading="_isSaving"
+                              Style="min-width: 80px;">
+                    Save
+                </FluentButton>
+
+            </FluentStack>
+
+        </FluentStack>
+
+    </EditForm>
+
+</FluentCard>
+
+@code {
+    [Parameter, EditorRequired] public Template Template { get; set; } = default!;
+    [Parameter] public EventCallback<Template> OnSave { get; set; }
+
+    private bool _isSaving;
+
+    private async Task HandleSave()
+    {
+        if (_isSaving)
+            return;
+
+        _isSaving = true;
+        await Task.Delay(500);
+        await OnSave.InvokeAsync(Template);
+        _isSaving = false;
+    }
+
+}

@@ -1,0 +1,127 @@
+<FluentCard Style="border: 1px solid var(--neutral-stroke-divider);">
+    
+    @* Add/edit selection region header *@
+    <FluentToolbar>
+        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+            @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Add document region" : "Edit document region")
+        </FluentLabel>
+    </FluentToolbar>
+    
+    @if (DocumentSelection is null || 
+         (DocumentSelection.CanvasSelection.X is 0 && DocumentSelection.CanvasSelection.Y is 0) 
+    )
+    {
+        <div style="text-align: center; padding: 32px 16px; color: var(--neutral-foreground-secondary);">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Document())" Style="margin-bottom: 8px;"/>
+            <FluentLabel Typography="Typography.Caption" Style="display: block;">
+                No active document region. Draw on the PDF or edit an existing document region below.
+            </FluentLabel>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="DocumentSelection" OnValidSubmit="HandleSave">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
+
+            <InputText @bind-Value="DocumentSelection!.Id" type="hidden"/>
+
+            <FluentStack Orientation="Orientation.Vertical" Style="padding: 10px; gap: 10px;">
+                
+                @* Name *@
+                <FluentTextField @bind-Value="DocumentSelection!.Name"
+                                 Label="Region name"
+                                 Placeholder="Enter a descriptive name..."
+                                 Style="width: 100%;"/>
+                
+                @* Data type (Not implemented yet) *@
+                <FluentSelect Id="data-type-list" Label="Data type" TOption="string" Style="width: 100%;" Position="SelectPosition.Below">
+                    <FluentOption Value="1" Disabled="true">Text</FluentOption>
+                    <FluentOption Value="2" Disabled="true">Number</FluentOption>
+                    <FluentOption Value="3" Disabled="true">List</FluentOption>
+                </FluentSelect>
+                <FluentTooltip Anchor="data-type-list" HideTooltipOnCursorLeave="true" Position=TooltipPosition.Top Delay=100>Not implemented yet!</FluentTooltip>
+                
+                @* Selection type (Not implemented yet) *@
+                <FluentSelect Id="selection-type-list" Label="Selection type" TOption="string" Style="width: 100%;" Position="SelectPosition.Below">
+                    <FluentOption Value="1" Disabled="true">Characters</FluentOption>
+                    <FluentOption Value="2" Disabled="true">Block</FluentOption>
+                </FluentSelect>
+                <FluentTooltip Anchor="selection-type-list" HideTooltipOnCursorLeave="true" Position=TooltipPosition.Top Delay=100>Not implemented yet!</FluentTooltip>
+                
+                @* Coordinates/dimensions *@
+                <FluentAccordion Style="width: 100%;">
+                    <FluentAccordionItem Heading="Coordinates/dimensions">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.WindowDevTools())" Color="@Color.Neutral" Slot="start" />
+
+                        @* X and Y coordinates *@
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10">
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.X"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">X</FluentNumberField>
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Y"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">Y</FluentNumberField>
+                        </FluentStack>
+
+                        @* Width and height dimensions *@
+                        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 20px;">
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Width"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">Width</FluentNumberField>
+                            <FluentNumberField @bind-Value="DocumentSelection!.CanvasSelection.Height"
+                                               ReadOnly="true"
+                                               Style="flex: 1;">Height</FluentNumberField>
+                        </FluentStack>
+                        
+                    </FluentAccordionItem>
+                </FluentAccordion>
+
+                @* Add/update buttons *@
+                <FluentStack Orientation="Orientation.Horizontal"
+                             Style="gap: 8px; margin-top: 16px; justify-content: flex-end;">
+                    
+                    @* Cancel button *@
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="HandleCancel"
+                                  Type="ButtonType.Button"
+                                  Style="min-width: 80px;">
+                        Cancel
+                    </FluentButton>
+                    
+                    @* Add/update button *@
+                    <FluentButton Appearance="Appearance.Accent"
+                                  Type="ButtonType.Submit"
+                                  IconStart="@(new Icons.Regular.Size16.Add())"
+                                  Loading="_isSaving"
+                                  Style="min-width: 80px;">
+                        @(string.IsNullOrEmpty(DocumentSelection?.Id) ? "Add" : "Update")
+                    </FluentButton>
+                    
+                </FluentStack>
+                
+            </FluentStack>
+        </EditForm>
+    }
+</FluentCard>
+
+@code {
+    [Parameter] public DocumentSelection? DocumentSelection { get; set; }
+    [Parameter] public EventCallback<DocumentSelection> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private bool _isSaving;
+
+    private async Task HandleSave()
+    {
+        if (_isSaving)
+            return;
+        
+        _isSaving = true;
+        await Task.Delay(500);
+        await OnSave.InvokeAsync(DocumentSelection);
+        _isSaving = false;
+    }
+    
+    private async Task HandleCancel() => await OnCancel.InvokeAsync();
+}

@@ -1,0 +1,168 @@
+@page "/"
+@page "/{TemplateId}"
+
+@inject TemplateRepository TemplateRepository
+@inject IToastService ToastService
+
+<PageTitle>PDF data extraction demo</PageTitle>
+
+<FluentStack Orientation="Orientation.Horizontal" Style="height: 100%;">
+
+    <!-- PDF canvas -->
+    <FluentStack Orientation="Orientation.Vertical"
+                 VerticalGap="25"
+                 Style="width: 100%; margin: 5px">
+
+        @if (_template is not null)
+        {
+            <TemplateBuilderPdfCanvas @ref="_pdfViewer"
+                                      Selections="_template.DocumentSelections"
+                                      OnDraw="HandleDraw"/>
+        }
+
+    </FluentStack>
+
+    <!-- Template controls -->
+    <TemplateBuilderSidebar Template="_template"
+                            ActiveDocumentSelection="_activeDocumentSelection"
+                            OnTemplateSave="HandleTemplateSaveClicked"
+                            OnSelectionSave="HandleSelectionSaveClicked"
+                            OnSelectionEdit="HandleSelectionEditClicked"
+                            OnSelectionDelete="HandleSelectionDeleteClicked"
+                            OnSelectionCancel="HandleSelectionCancelClicked"
+                            OnDataExtract="OnDataExtracted"/>
+</FluentStack>
+
+@code {
+
+    [Parameter] public string? TemplateId { get; set; }
+
+    private Template? _template;
+    private DocumentSelection _activeDocumentSelection { get; set; } = new();
+    
+    private TemplateBuilderPdfCanvas? _pdfViewer;
+    private string? _loadedTemplateId;
+    private bool _pdfInitialized;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(TemplateId))
+        {
+            // Load existing template
+            _template = await TemplateRepository.Get(TemplateId);
+        }
+
+        // If no ID was provided or the template was not found, create a new one.
+        _template ??= new Template
+        {
+            Id = Guid.NewGuid().ToString()
+        };
+        
+        // Force re-initialization of the PDF viewer if the template ID has changed
+        if (_loadedTemplateId != TemplateId)
+        {
+            _loadedTemplateId = TemplateId;
+            _pdfInitialized = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pdfInitialized && _pdfViewer is not null)
+        {
+            await _pdfViewer.InitializePdf("sample-invoice.pdf");
+            await _pdfViewer.RedrawSelections();
+            _pdfInitialized = true;
+        }
+    }
+
+    private void HandleDraw(CanvasSelection canvasSelection)
+    {
+        var newDocumentSelection = new DocumentSelection
+        {
+            Id = _activeDocumentSelection.Id,
+            Name = _activeDocumentSelection.Name,
+            CanvasSelection = canvasSelection
+        };
+
+        _activeDocumentSelection = newDocumentSelection;
+
+        StateHasChanged();
+    }
+
+    private async Task HandleTemplateSaveClicked(Template template)
+    {
+        await TemplateRepository.Save(template);
+        ToastService.ShowToast(ToastIntent.Success, "Template saved.");
+    }
+
+    private async Task HandleSelectionSaveClicked(DocumentSelection selection)
+    {
+        if (_template is null || _pdfViewer is null) return;
+
+        var existingSelection = _template.DocumentSelections.FirstOrDefault(b => b.Id == selection.Id);
+        var pdfHeight = await _pdfViewer.GetPdfHeight();
+
+        if (existingSelection is null)
+        {
+            selection.Id = Guid.NewGuid().ToString();
+            selection.PdfSelection = selection.CanvasSelection.ToPdfSelectionCoordinates(pdfHeight);
+            _template.DocumentSelections.Add(selection);
+            ToastService.ShowToast(ToastIntent.Success, "Document region added.");
+        }
+        else
+        {
+            existingSelection.Name = selection.Name;
+            existingSelection.CanvasSelection = selection.CanvasSelection;
+            existingSelection.PdfSelection = selection.CanvasSelection.ToPdfSelectionCoordinates(pdfHeight);
+            ToastService.ShowToast(ToastIntent.Success, "Document region updated.");
+        }
+
+        _activeDocumentSelection = new DocumentSelection();
+        await _pdfViewer.RedrawSelections();
+        StateHasChanged();
+    }
+
+    private async Task HandleSelectionEditClicked(DocumentSelection selection)
+    {
+        if (_pdfViewer is null) return;
+
+        _activeDocumentSelection = selection;
+        await _pdfViewer.HighlightSelection(selection);
+        StateHasChanged();
+    }
+
+    private async Task HandleSelectionDeleteClicked(DocumentSelection selection)
+    {
+        if (_template is null || _pdfViewer is null) return;
+
+        _template.DocumentSelections.Remove(selection);
+        
+        ToastService.ShowToast(ToastIntent.Success, "Document region deleted.");
+        
+
+        if (_activeDocumentSelection.Id == selection.Id)
+        {
+            _activeDocumentSelection = new DocumentSelection();
+        }
+
+        await _pdfViewer.RedrawSelections();
+        StateHasChanged();
+    }
+
+    private async Task HandleSelectionCancelClicked()
+    {
+        if (_pdfViewer is null) return;
+
+        _activeDocumentSelection = new DocumentSelection();
+        await _pdfViewer.RedrawSelections();
+        StateHasChanged();
+    }
+
+    private Task OnDataExtracted()
+    {
+        ToastService.ShowToast(ToastIntent.Success, "Data extracted.");
+        return Task.CompletedTask;
+    }
+
+}
