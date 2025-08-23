@@ -1,4 +1,4 @@
-# PDF data extraction using .NET
+# PDF data extraction using `PdfPig`
 
 This is a sample project exploring the capabilities of the `PdfPig` NuGet package for document data extraction. The project demonstrates how to extract text and data from PDF documents, all withing a Blazor WebAssembly standalone app that runs entirely from the browser.
 
